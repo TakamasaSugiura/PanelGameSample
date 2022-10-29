@@ -2,23 +2,10 @@
 #include <SDL_image.h>
 #include <stdlib.h>
 #include <time.h>
+#include "sdl_extensions.h"
 
 static const int WINDOW_WIDTH = 640;
 static const int WINDOW_HEIGHT = 480;
-static const int BORDER_WIDTH = 5;
-static const int BORDER_HEIGHT = 6;
-
-typedef struct
-{
-    int w;
-    int h;
-} SDL_Size;
-
-typedef struct
-{
-    SDL_Surface** surface;
-    int length;
-} SDL_SurfaceCollection;
 
 typedef enum
 {
@@ -26,36 +13,54 @@ typedef enum
     FOREGROUND
 } SurfaceIndex;
 
-SDL_SurfaceCollection* SDL_CreateSurfaceCollection(int length)
+
+static SDL_bool m_map[7][7];
+static int m_cell_count = 5; // 3, 4, 5のいずれか
+static SDL_Size m_cell_size;
+static int m_border_width = 0;
+static int m_border_height = 0;
+
+
+void InitMap()
 {
-    SDL_SurfaceCollection* collection = (SDL_SurfaceCollection*)malloc(sizeof(SDL_SurfaceCollection));
-    if (collection)
+    for (int y = 0; y < 7; y++)
     {
-        collection->surface = (SDL_Surface**)calloc(length, sizeof(SDL_Surface*));
-        collection->length = length;
-        if (collection->surface)
+        for (int x = 0; x < 7; x++)
         {
-            for (int i = 0; i < length; i++)
-            {
-                collection->surface[i] = NULL;
-            }
+            m_map[y][x] = SDL_FALSE;
         }
     }
-    return collection;
+    switch (m_cell_count) 
+    {
+    case 3:
+        m_border_width = 5;
+        m_border_height = 6;
+        break;
+    case 4:
+        m_border_width = 4;
+        m_border_height = 4;
+        break;
+    case 5:
+        m_border_width = 5;
+        m_border_height = 5;
+        break;
+    default:
+        // 
+        break;
+    }
 }
 
-void SDL_DeleteSurfaceCollection(SDL_SurfaceCollection* collection)
+void InitAll()
 {
-    for (int i = 0; i < collection->length; i++)
-    {
-        if (collection->surface[i])
-        {
-            SDL_FreeSurface(collection->surface[i]);
-            collection->surface[i] = NULL;
-        }
-    }
-    free(collection->surface);
-    free(collection);
+    SDL_Init(SDL_INIT_EVERYTHING);
+    IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
+    InitMap();
+}
+
+void QuitAll()
+{
+    IMG_Quit();
+    SDL_Quit();
 }
 
 void DrawSurfaceCollection(SDL_SurfaceCollection* collection, SDL_Window* window)
@@ -72,44 +77,29 @@ void DrawSurfaceCollection(SDL_SurfaceCollection* collection, SDL_Window* window
     SDL_UpdateWindowSurface(window);
 }
 
-SDL_Surface* SDL_CreateRGBSurfaceLite(int w, int h)
-{
-    Uint32 rmask, gmask, bmask, amask;
-
-    /* SDL interprets each pixel as a 32-bit number, so our masks must depend
-       on the endianness (byte order) of the machine */
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    rmask = 0xff000000;
-    gmask = 0x00ff0000;
-    bmask = 0x0000ff00;
-    amask = 0x000000ff;
-#else
-    rmask = 0x000000ff;
-    gmask = 0x0000ff00;
-    bmask = 0x00ff0000;
-    amask = 0xff000000;
-#endif
-
-    SDL_Surface* fgSurface = SDL_CreateRGBSurface(0, w, h, 32, rmask, gmask, bmask, amask);
-    return fgSurface;
-}
-
-SDL_Surface* CreateBackgroundSurface(SDL_Rect* windowRect, SDL_Size* areaSize)
+SDL_Surface* CreateBackgroundSurface(SDL_Rect* windowRect)
 {
     SDL_Surface* bgSurface = SDL_CreateRGBSurfaceLite(windowRect->w, windowRect->h);
-    //SDL_FillRect(bgSurface, &bgSurface->clip_rect, SDL_MapRGB(bgSurface->format, 0x00, 0x00, 0x00));
     SDL_Surface* imageSurface = IMG_Load("bgimage.png");
     SDL_BlitSurface(imageSurface, &imageSurface->clip_rect, bgSurface, &bgSurface->clip_rect);
     SDL_FreeSurface(imageSurface);
-    SDL_Rect horizontalBorderRect = { .x = 0, .y = areaSize->h, .w = bgSurface->clip_rect.w, .h = BORDER_HEIGHT };
     Uint32 borderColor = SDL_MapRGB(bgSurface->format, 0xFF, 0xFF, 0xFF);
-    SDL_FillRect(bgSurface, &horizontalBorderRect, borderColor);
-    horizontalBorderRect.y += areaSize->h + BORDER_HEIGHT;
-    SDL_FillRect(bgSurface, &horizontalBorderRect, borderColor);
-    SDL_Rect verticalBorderRect = { .x = areaSize->w, .y = 0, .w = BORDER_WIDTH, .h = bgSurface->clip_rect.w };
-    SDL_FillRect(bgSurface, &verticalBorderRect, borderColor);
-    verticalBorderRect.x += areaSize->w + BORDER_WIDTH;
-    SDL_FillRect(bgSurface, &verticalBorderRect, borderColor);
+
+    // Draw horizontal borders.
+    SDL_Rect horizontalBorderRect = { .x = 0, .y = m_cell_size.h, .w = bgSurface->clip_rect.w, .h = m_border_height };
+    for (int i = 0; i < m_cell_count; i++)
+    {
+        SDL_FillRect(bgSurface, &horizontalBorderRect, borderColor);
+        horizontalBorderRect.y += m_cell_size.h + m_border_height;
+    }
+
+    // Draw vertical borders.
+    SDL_Rect verticalBorderRect = { .x = m_cell_size.w, .y = 0, .w = m_border_width, .h = bgSurface->clip_rect.w };
+    for (int i = 0; i < m_cell_count; i++)
+    {
+        SDL_FillRect(bgSurface, &verticalBorderRect, borderColor);
+        verticalBorderRect.x += m_cell_size.w + m_border_height;
+    }
     return bgSurface;
 }
 
@@ -120,33 +110,33 @@ SDL_Surface* CreateForegroundSurface(SDL_Rect* windowRect)
     return fgSurface;
 }
 
-void PanelClickedEvent(SDL_bool map[3][3], int xIndex, int yIndex)
+void PanelClickedEvent(int xIndex, int yIndex)
 {
-    map[yIndex][xIndex] = !map[yIndex][xIndex];
-    if (yIndex - 1 >= 0) map[yIndex - 1][xIndex] = !map[yIndex - 1][xIndex];
-    if (yIndex + 1 <= 2) map[yIndex + 1][xIndex] = !map[yIndex + 1][xIndex];
-    if (xIndex - 1 >= 0) map[yIndex][xIndex - 1] = !map[yIndex][xIndex - 1];
-    if (xIndex + 1 <= 2) map[yIndex][xIndex + 1] = !map[yIndex][xIndex + 1];
+    m_map[yIndex][xIndex] = !m_map[yIndex][xIndex];
+    if (yIndex - 1 >= 0) m_map[yIndex - 1][xIndex] = !m_map[yIndex - 1][xIndex];
+    if (yIndex + 1 <= m_cell_count - 1) m_map[yIndex + 1][xIndex] = !m_map[yIndex + 1][xIndex];
+    if (xIndex - 1 >= 0) m_map[yIndex][xIndex - 1] = !m_map[yIndex][xIndex - 1];
+    if (xIndex + 1 <= m_cell_count - 1) m_map[yIndex][xIndex + 1] = !m_map[yIndex][xIndex + 1];
 }
 
 
-void UpdateWindow(SDL_bool map[3][3], SDL_Size* areaSize, SDL_SurfaceCollection* collection, SDL_Window* window)
+void UpdateWindow(SDL_SurfaceCollection* collection, SDL_Window* window)
 {
     int count = 0;
     SDL_FreeSurface(collection->surface[FOREGROUND]);
     SDL_Surface* windowSurface = SDL_GetWindowSurface(window);
     collection->surface[FOREGROUND] = SDL_CreateRGBSurfaceLite(windowSurface->clip_rect.w, windowSurface->clip_rect.h);
     SDL_Surface* fgSurface = collection->surface[FOREGROUND];
-    for (int loopY = 0; loopY < 3; loopY++)
+    for (int loopY = 0; loopY < m_cell_count; loopY++)
     {
-        for (int loopX = 0; loopX < 3; loopX++)
+        for (int loopX = 0; loopX < m_cell_count; loopX++)
         {
             SDL_Rect rect;
-            rect.x = loopX * (areaSize->w + BORDER_WIDTH);
-            rect.y = loopY * (areaSize->h + BORDER_HEIGHT);
-            rect.w = areaSize->w;
-            rect.h = areaSize->h;
-            if (map[loopY][loopX])
+            rect.x = loopX * (m_cell_size.w + m_border_width);
+            rect.y = loopY * (m_cell_size.h + m_border_height);
+            rect.w = m_cell_size.w;
+            rect.h = m_cell_size.h;
+            if (m_map[loopY][loopX])
             {
                 SDL_FillRect(fgSurface, &rect, SDL_MapRGBA(fgSurface->format, 0x00, 0x66, 0x00, 0x66));
             }
@@ -155,34 +145,34 @@ void UpdateWindow(SDL_bool map[3][3], SDL_Size* areaSize, SDL_SurfaceCollection*
     DrawSurfaceCollection(collection, window);
 }
 
-void MouseButtonDownEvent(SDL_bool map[3][3], SDL_Event* event, SDL_Size* areaSize, SDL_SurfaceCollection* collection, SDL_Window* window, SDL_bool* endFlag)
+void MouseButtonDownEvent(SDL_Event* event, SDL_SurfaceCollection* collection, SDL_Window* window, SDL_bool* endFlag)
 {
-    int pointedX = event->button.x / (areaSize->w + BORDER_WIDTH / 2);
-    int pointedY = event->button.y / (areaSize->h + BORDER_HEIGHT / 2);
+    int pointedX = event->button.x / (m_cell_size.w + m_border_width / 2);
+    int pointedY = event->button.y / (m_cell_size.h + m_border_height / 2);
 
-    PanelClickedEvent(map, pointedX, pointedY);
+    PanelClickedEvent(pointedX, pointedY);
 
-    UpdateWindow(map, areaSize, collection, window);
+    UpdateWindow(collection, window);
 
     int count = 0;
-    for (int loopY = 0; loopY < 3; loopY++)
+    for (int loopY = 0; loopY < m_cell_count; loopY++)
     {
-        for (int loopX = 0; loopX < 3; loopX++)
+        for (int loopX = 0; loopX < m_cell_count; loopX++)
         {
-            if (map[loopY][loopX])
+            if (m_map[loopY][loopX])
             {
                 count++;
             }
         }
     }
 
-    if (count == 9)
+    if (count == m_cell_count * m_cell_count)
     {
         *endFlag = SDL_TRUE;
     }
 }
 
-void EventLoop(SDL_bool map[3][3], SDL_Size* areaSize, SDL_SurfaceCollection* collection, SDL_Window* window)
+void EventLoop(SDL_SurfaceCollection* collection, SDL_Window* window)
 {
     SDL_bool endFlag = SDL_FALSE;
 
@@ -197,7 +187,7 @@ void EventLoop(SDL_bool map[3][3], SDL_Size* areaSize, SDL_SurfaceCollection* co
                 endFlag = SDL_TRUE;
                 break;
             case SDL_MOUSEBUTTONDOWN:
-                MouseButtonDownEvent(map, &event, areaSize, collection, window, &endFlag);
+                MouseButtonDownEvent(&event, collection, window, &endFlag);
                 break;
             default:
                 break;
@@ -209,21 +199,11 @@ void EventLoop(SDL_bool map[3][3], SDL_Size* areaSize, SDL_SurfaceCollection* co
 
 int SDL_main(int argc, char* argv[])
 {
-    SDL_Init(SDL_INIT_EVERYTHING);
-    IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
+    InitAll();
     SDL_SurfaceCollection* collection = SDL_CreateSurfaceCollection(2);
+    m_cell_size.w = (WINDOW_WIDTH - (m_border_width * 2)) / m_cell_count;
+    m_cell_size.h = (WINDOW_HEIGHT - (m_border_height * 2)) / m_cell_count;
 
-    SDL_Size areaSize = {
-        .w = (WINDOW_WIDTH - (BORDER_WIDTH * 2)) / 3,
-        .h = (WINDOW_HEIGHT - (BORDER_HEIGHT * 2)) / 3
-    };
-
-    SDL_bool map[3][3] =
-    {
-        { SDL_FALSE, SDL_FALSE, SDL_FALSE },
-        { SDL_FALSE, SDL_FALSE, SDL_FALSE },
-        { SDL_FALSE, SDL_FALSE, SDL_FALSE }
-    };
 
     // Window
     SDL_Window* window = SDL_CreateWindow("title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
@@ -231,24 +211,23 @@ int SDL_main(int argc, char* argv[])
     // Window Surface
     SDL_Surface* windowSurface = SDL_GetWindowSurface(window);
 
-    collection->surface[BACKGROUND] = CreateBackgroundSurface(&windowSurface->clip_rect, &areaSize);
+    collection->surface[BACKGROUND] = CreateBackgroundSurface(&windowSurface->clip_rect);
     collection->surface[FOREGROUND] = CreateForegroundSurface(&windowSurface->clip_rect);
 
     srand(time(NULL));
     for (int i = 0; i < 4; i++)
     {
-        int x = rand() % 3;
-        int y = rand() % 3;
-        PanelClickedEvent(map, x, y);
+        int x = rand() % m_cell_count;
+        int y = rand() % m_cell_count;
+        PanelClickedEvent(x, y);
     }
 
-    UpdateWindow(map, &areaSize, collection, window);
+    UpdateWindow(collection, window);
 
-    EventLoop(map, &areaSize, collection, window);
+    EventLoop(collection, window);
 
     SDL_DeleteSurfaceCollection(collection);
     SDL_DestroyWindow(window);
-    IMG_Quit();
-    SDL_Quit();
+    QuitAll();
     return 0;
 }
