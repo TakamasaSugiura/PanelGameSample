@@ -19,3 +19,6 @@ void SDL_DeleteSurfaceCollection(SDL_SurfaceCollection* collection);
 
 SDL_Surface* SDL_CreateRGBSurfaceLite(int w, int h);
 
+int SDL_FillAll(SDL_Surface* surface, Uint32 color);
+
+int SDL_PutSurface(SDL_Surface* src, SDL_Point* point, SDL_Surface* dst);

@@ -127,14 +127,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="game.c" />
+    <ClCompile Include="game_objects.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="sdl_extensions.c" />
+    <ClCompile Include="start.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="all.h" />
+    <ClInclude Include="game.h" />
+    <ClInclude Include="game_objects.h" />
     <ClInclude Include="sdl_extensions.h" />
+    <ClInclude Include="setting.h" />
+    <ClInclude Include="start.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

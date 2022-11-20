@@ -53,3 +53,15 @@ SDL_Surface* SDL_CreateRGBSurfaceLite(int w, int h)
     SDL_Surface* fgSurface = SDL_CreateRGBSurface(0, w, h, 32, rmask, gmask, bmask, amask);
     return fgSurface;
 }
+
+int SDL_FillAll(SDL_Surface* surface, Uint32 color)
+{
+    return SDL_FillRect(surface, &surface->clip_rect, color);
+}
+
+int SDL_PutSurface(SDL_Surface* src, SDL_Point* point, SDL_Surface* dst)
+{
+    SDL_Rect dst_rect = { .x = point->x, .y = point->y, .w = 0, .h = 0 };
+    SDL_Rect src_rect = { .x = 0, .y = 0, .w = 0, .h = 0 };
+    return SDL_BlitSurface(src, &src_rect, dst, &dst_rect);
+}
