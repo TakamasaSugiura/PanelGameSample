@@ -62,6 +62,14 @@ int SDL_FillAll(SDL_Surface* surface, Uint32 color)
 int SDL_PutSurface(SDL_Surface* src, SDL_Point* point, SDL_Surface* dst)
 {
     SDL_Rect dst_rect = { .x = point->x, .y = point->y, .w = 0, .h = 0 };
-    SDL_Rect src_rect = { .x = 0, .y = 0, .w = 0, .h = 0 };
+    SDL_Rect src_rect = { .x = 0, .y = 0, .w = src->w, .h = src->h };
     return SDL_BlitSurface(src, &src_rect, dst, &dst_rect);
+}
+
+void SDL_CopyRect(SDL_Rect* src, SDL_Rect* dst)
+{
+    dst->x = src->x;
+    dst->y = src->y;
+    dst->w = src->w;
+    dst->h = src->h;
 }

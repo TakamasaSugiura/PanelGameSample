@@ -1,2 +1,2 @@
 #pragma once
-int game_main();
+int GameMain(SDL_Window* window, int levelIndex);

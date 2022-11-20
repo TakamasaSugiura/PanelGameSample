@@ -10,4 +10,8 @@ typedef struct
     void* parameter;
 } Button;
 
-int do_button_action(SDL_MouseButtonEvent* event);
+int RegisterScreenButton(SDL_Rect* src_rect, void (*func)(SDL_MouseButtonEvent*, void*), void* parameter);
+int UnregisterScreenButton(int index);
+int UnregisterAllScreenButtons();
+
+int DoButtonAction(SDL_MouseButtonEvent* event);

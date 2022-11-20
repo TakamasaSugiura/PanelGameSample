@@ -8,7 +8,7 @@ typedef enum
 
 
 static SDL_bool m_map[7][7];
-static int m_cell_count = 5; // 3, 4, 5‚Ì‚¢‚¸‚ê‚©
+static int m_cell_count = 2; // 3, 4, 5‚Ì‚¢‚¸‚ê‚©
 static SDL_Size m_cell_size;
 static int m_border_width = 0;
 static int m_border_height = 0;
@@ -153,7 +153,7 @@ void MouseButtonDownEvent(SDL_Event* event, SDL_SurfaceCollection* collection, S
     }
 }
 
-void EventLoop(SDL_SurfaceCollection* collection, SDL_Window* window)
+static void EventLoop(SDL_SurfaceCollection* collection, SDL_Window* window)
 {
     SDL_bool endFlag = SDL_FALSE;
 
@@ -178,8 +178,9 @@ void EventLoop(SDL_SurfaceCollection* collection, SDL_Window* window)
     }
 }
 
-int game_main(SDL_Window *window)
+int GameMain(SDL_Window *window, int levelIndex)
 {
+    m_cell_count = 2 + levelIndex;
     InitMap();
     SDL_Surface* windowSurface = SDL_GetWindowSurface(window);
     SDL_SurfaceCollection* collection = SDL_CreateSurfaceCollection(2);
@@ -202,7 +203,5 @@ int game_main(SDL_Window *window)
     EventLoop(collection, window);
 
     SDL_DeleteSurfaceCollection(collection);
-    SDL_DestroyWindow(window);
-    QuitAll();
     return 0;
 }

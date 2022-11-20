@@ -1,21 +1,23 @@
 #include "game_objects.h"
 #define MAX_BUTTON_COUNT 100
 
-Button* buttons[MAX_BUTTON_COUNT];
+Button* _buttons[MAX_BUTTON_COUNT];
 
-void init_game_objects()
+void InitGameObjects()
 {
     for (int i = 0; i < MAX_BUTTON_COUNT; i++)
     {
-        buttons[i] = NULL;
+        _buttons[i] = NULL;
     }
 }
 
-static Button* create_button(SDL_Rect* rect, void (*func)(SDL_MouseButtonEvent*, void*), void* parameter)
+static Button* CreateButton(SDL_Rect* src_rect, void (*func)(SDL_MouseButtonEvent*, void*), void* parameter)
 {
     Button* button = (Button*)malloc(sizeof(Button));
     if (button)
     {
+        SDL_Rect *rect = (SDL_Rect*)malloc(sizeof(SDL_Rect));
+        SDL_CopyRect(src_rect, rect);
         button->rect = rect;
         button->func = func;
         button->parameter = parameter;
@@ -23,39 +25,40 @@ static Button* create_button(SDL_Rect* rect, void (*func)(SDL_MouseButtonEvent*,
     return button;
 }
 
-int register_screen_button(SDL_Rect* rect, void (*func)(SDL_MouseButtonEvent*, void*), void* parameter)
+int RegisterScreenButton(SDL_Rect* src_rect, void (*func)(SDL_MouseButtonEvent*, void*), void* parameter)
 {
     for (int i = 0; i < MAX_BUTTON_COUNT; i++)
     {
-        if (buttons[i] == NULL)
+        if (_buttons[i] == NULL)
         {
-            buttons[i] = create_button(rect, func, parameter);
+            _buttons[i] = CreateButton(src_rect, func, parameter);
             return i;
         }
     }
     return -1;
 }
 
-int unregister_screen_button(int index)
+int UnregisterScreenButton(int index)
 {
-    if (buttons[index] != NULL)
+    if (_buttons[index] != NULL)
     {
-        free(buttons[index]);
-        buttons[index] = NULL;
+        free(_buttons[index]->rect);
+        free(_buttons[index]);
+        _buttons[index] = NULL;
     }
     return 0;
 }
 
-int do_button_action(SDL_MouseButtonEvent* event)
+int DoButtonAction(SDL_MouseButtonEvent* event)
 {
     SDL_Point point = { .x = event->x, .y = event->y };
     for (int i = 0; i < MAX_BUTTON_COUNT; i++)
     {
-        if (buttons[i] == NULL)
+        if (_buttons[i] == NULL)
         {
             continue;
         }
-        Button* button = buttons[i];
+        Button* button = _buttons[i];
         if (SDL_PointInRect(&point, button->rect))
         {
             button->func(event, button->parameter);
@@ -64,11 +67,11 @@ int do_button_action(SDL_MouseButtonEvent* event)
     return 0;
 }
 
-int unregister_all_screen_buttons()
+int UnregisterAllScreenButtons()
 {
     for (int i = 0; i < MAX_BUTTON_COUNT; i++)
     {
-        unregister_screen_button(i);
+        UnregisterScreenButton(i);
     }
     return 0;
 }
