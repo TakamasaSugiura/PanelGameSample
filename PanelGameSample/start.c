@@ -45,7 +45,7 @@ int InitStartScreen(SDL_Window* window)
 
     RegisterScreenButton(&easy_rect, EasyButtonFunction, NULL);
     RegisterScreenButton(&normal_rect, NormalButtonFunction, NULL);
-    RegisterScreenButton(&normal_rect, HardButtonFunction, NULL);
+    RegisterScreenButton(&hard_rect, HardButtonFunction, NULL);
 
     SDL_FreeSurface(easy_image);
     SDL_FreeSurface(normal_image);
