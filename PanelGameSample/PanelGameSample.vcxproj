@@ -131,7 +131,7 @@
     <ClCompile Include="game_objects.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="sdl_extensions.c" />
-    <ClCompile Include="start.c" />
+    <ClCompile Include="start_menu.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -142,7 +142,7 @@
     <ClInclude Include="game_objects.h" />
     <ClInclude Include="sdl_extensions.h" />
     <ClInclude Include="setting.h" />
-    <ClInclude Include="start.h" />
+    <ClInclude Include="start_menu.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

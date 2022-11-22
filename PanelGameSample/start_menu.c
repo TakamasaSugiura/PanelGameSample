@@ -84,7 +84,7 @@ static void EventLoop(SDL_Window* window)
     }
 }
 
-int RunStartScreen(SDL_Window* window)
+int ShowStartMenu(SDL_Window* window)
 {
     InitStartScreen(window);
     EventLoop(window);
