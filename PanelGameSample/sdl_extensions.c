@@ -6,12 +6,20 @@ SDL_SurfaceCollection* SDL_CreateSurfaceCollection(int length)
     if (collection)
     {
         collection->surface = (SDL_Surface**)calloc(length, sizeof(SDL_Surface*));
+        collection->texture = (SDL_Texture**)calloc(length, sizeof(SDL_Texture*));
         collection->length = length;
         if (collection->surface)
         {
             for (int i = 0; i < length; i++)
             {
                 collection->surface[i] = NULL;
+            }
+        }
+        if (collection->texture)
+        {
+            for (int i = 0; i < length; i++)
+            {
+                collection->texture[i] = NULL;
             }
         }
     }
@@ -27,8 +35,14 @@ void SDL_DeleteSurfaceCollection(SDL_SurfaceCollection* collection)
             SDL_FreeSurface(collection->surface[i]);
             collection->surface[i] = NULL;
         }
+        if (collection->texture[i])
+        {
+            SDL_DestroyTexture(collection->texture[i]);
+            collection->texture[i] = NULL;
+        }
     }
     free(collection->surface);
+    free(collection->texture);
     free(collection);
 }
 

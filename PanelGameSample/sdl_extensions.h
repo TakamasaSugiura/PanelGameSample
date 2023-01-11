@@ -10,6 +10,7 @@ typedef struct
 typedef struct
 {
     SDL_Surface** surface;
+    SDL_Texture** texture;
     int length;
 } SDL_SurfaceCollection;
 

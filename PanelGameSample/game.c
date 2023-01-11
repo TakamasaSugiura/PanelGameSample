@@ -47,15 +47,19 @@ void InitMap()
 void DrawSurfaceCollection(SDL_SurfaceCollection* collection, SDL_Window* window)
 {
     SDL_Surface* windowSurface = SDL_GetWindowSurface(window);
+    SDL_Renderer* renderer = SDL_GetRenderer(window);
     for (int i = 0; i < collection->length; i++)
     {
         SDL_Surface* srcSurface = collection->surface[i];
+        SDL_Texture* srcTexture = collection->texture[i];
         if (srcSurface != NULL)
         {
-            SDL_BlitSurface(srcSurface, &srcSurface->clip_rect, windowSurface, &windowSurface->clip_rect);
+            //SDL_BlitSurface(srcSurface, &srcSurface->clip_rect, windowSurface, &windowSurface->clip_rect);
+            SDL_RenderCopy(renderer, srcTexture, &srcSurface->clip_rect, &windowSurface->clip_rect);
         }
     }
-    SDL_UpdateWindowSurface(window);
+    SDL_RenderPresent(renderer);
+    //SDL_UpdateWindowSurface(window);
 }
 
 SDL_Surface* CreateBackgroundSurface(SDL_Rect* windowRect)
@@ -183,12 +187,17 @@ int GameMain(SDL_Window *window, int levelIndex)
     m_cell_count = 2 + levelIndex;
     InitMap();
     SDL_Surface* windowSurface = SDL_GetWindowSurface(window);
+    SDL_Renderer* renderer = SDL_GetRenderer(window);
     SDL_SurfaceCollection* collection = SDL_CreateSurfaceCollection(2);
     m_cell_size.w = (windowSurface->w - (m_border_width * 2)) / m_cell_count;
     m_cell_size.h = (windowSurface->h - (m_border_height * 2)) / m_cell_count;
 
-    collection->surface[BACKGROUND] = CreateBackgroundSurface(&windowSurface->clip_rect);
-    collection->surface[FOREGROUND] = CreateForegroundSurface(&windowSurface->clip_rect);
+    SDL_Surface* bgSurface = CreateBackgroundSurface(&windowSurface->clip_rect);
+    SDL_Surface* fgSurface = CreateForegroundSurface(&windowSurface->clip_rect);
+    collection->surface[BACKGROUND] = bgSurface;
+    collection->surface[FOREGROUND] = fgSurface;
+    collection->texture[BACKGROUND] = SDL_CreateTextureFromSurface(renderer, bgSurface);
+    collection->texture[FOREGROUND] = SDL_CreateTextureFromSurface(renderer, fgSurface);
 
     srand(time(NULL));
     for (int i = 0; i < 4; i++)
