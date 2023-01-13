@@ -110,6 +110,7 @@ void UpdateWindow(SDL_SurfaceCollection* collection, SDL_Window* window)
     int count = 0;
     SDL_FreeSurface(collection->surface[FOREGROUND]);
     SDL_Surface* windowSurface = SDL_GetWindowSurface(window);
+    SDL_Renderer* renderer = SDL_GetRenderer(window);
     collection->surface[FOREGROUND] = SDL_CreateRGBSurfaceLite(windowSurface->clip_rect.w, windowSurface->clip_rect.h);
     SDL_Surface* fgSurface = collection->surface[FOREGROUND];
     for (int loopY = 0; loopY < m_cell_count; loopY++)
@@ -127,6 +128,12 @@ void UpdateWindow(SDL_SurfaceCollection* collection, SDL_Window* window)
             }
         }
     }
+    //if (collection->texture[FOREGROUND])
+    //{
+    //    SDL_DestroyTexture(collection->texture[FOREGROUND]);
+    //    collection->texture[FOREGROUND] = NULL;
+    //}
+    collection->texture[FOREGROUND] = SDL_CreateTextureFromSurface(renderer, fgSurface);
     DrawSurfaceCollection(collection, window);
 }
 
